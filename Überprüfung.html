@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: Maximales Rechteck im Dreieck (Klasse 12)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- KaTeX für mathematischen Formelsatz -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .test-step { display: none; }
+    .test-step.active { display: block; }
+    canvas { touch-action: none; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="bg-indigo-700 text-white shadow-md py-4 px-4 sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-indigo-800 text-indigo-200 text-xs px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+          <span>Mathematik Stufe 12</span>
+          <span>•</span>
+          <span>Extremwertaufgaben</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight mt-1">Maximales Rechteck im Dreieck</h1>
+      </div>
+      <!-- Score & Progress Pill -->
+      <div class="flex items-center gap-4 bg-indigo-900/70 border border-indigo-500/40 px-4 py-2 rounded-xl text-sm">
+        <div class="text-center">
+          <span class="text-xs text-indigo-300 block">Punktestand</span>
+          <span id="score-display" class="font-mono text-lg font-bold text-amber-300">0 / 15 Pkt</span>
+        </div>
+        <div class="h-8 w-px bg-indigo-600"></div>
+        <div class="text-center">
+          <span class="text-xs text-indigo-300 block">Fortschritt</span>
+          <span id="step-display" class="font-mono text-lg font-bold text-white">Schritt 1/6</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-4xl mx-auto w-full px-4 py-6 flex-grow">
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-200 h-2.5 rounded-full mb-6 overflow-hidden">
+      <div id="progress-bar" class="bg-indigo-600 h-full w-1/6 transition-all duration-300"></div>
+    </div>
+
+    <!-- Scenario Box with Interactive HTML5 Canvas (y-Axis Points UP) -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+        
+        <!-- Text & Controls -->
+        <div class="md:col-span-6 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Interaktive Veranschaulichung</span>
+          <h2 class="text-lg font-bold text-slate-900">Rechteck im rechtwinkligen Dreieck</h2>
+          <p class="text-sm text-slate-700 leading-relaxed">
+            Ein dreieckiges Stück Papier hat an den Katheten die Maße <strong>$3\text{ dm}$</strong> (Breite auf x-Achse) und <strong>$5\text{ dm}$</strong> (Höhe auf y-Achse).
+          </p>
+          <p class="text-sm text-slate-700 leading-relaxed">
+            Der Eckpunkt $P(a|b)$ liegt auf der Hypotenuse durch $Q(0|5)$ und $R(3|0)$. Verschiebe den Punkt $P$, um das Rechteck anzupassen!
+          </p>
+
+          <!-- Interactive Slider -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mt-2 space-y-2">
+            <div class="flex justify-between items-center text-xs font-semibold text-slate-700">
+              <label for="p-slider" class="flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="sliders" class="w-4 h-4 text-indigo-600"></i>
+                <span>Breite $a$ einstellen:</span>
+              </label>
+              <span id="slider-val-display" class="font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">a = 1.50 dm</span>
+            </div>
+            <input type="range" id="p-slider" min="0" max="3" step="0.05" value="1.5" class="w-full accent-indigo-600 cursor-pointer">
+            
+            <div class="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+              <div class="bg-white p-2 rounded-lg border border-slate-200">
+                <span class="text-slate-400 block text-[10px]">Breite $a$</span>
+                <span id="live-a" class="font-bold font-mono text-slate-800">1.50 dm</span>
+              </div>
+              <div class="bg-white p-2 rounded-lg border border-slate-200">
+                <span class="text-slate-400 block text-[10px]">Höhe $b$</span>
+                <span id="live-b" class="font-bold font-mono text-slate-800">2.50 dm</span>
+              </div>
+              <div class="bg-indigo-50 p-2 rounded-lg border border-indigo-200">
+                <span class="text-indigo-500 block text-[10px] font-semibold">Fläche $A$</span>
+                <span id="live-area" class="font-bold font-mono text-indigo-700">3.75 dm²</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="md:col-span-6 flex flex-col items-center justify-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="relative w-full max-w-[320px] aspect-square">
+            <canvas id="graph-canvas" class="w-full h-full bg-white rounded-xl shadow-inner border border-slate-200 cursor-crosshair"></canvas>
+          </div>
+          <span class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+            <i data-lucide="mouse-pointer-click" class="w-3 h-3"></i> Ziehe den blauen Punkt $P$ im Koordinatensystem
+          </span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Test Steps Container -->
+    <div id="test-container">
+
+      <!-- ================= STEP 1 ================= -->
+      <div id="step-1" class="test-step active bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 1: Hauptbedingung wählen</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">2 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Welche Formel beschreibt die zu maximierende Größe (den Flächeninhalt $A$ des Rechtecks) in Abhängigkeit von Seitenlänge $a$ und $b$?
+        </p>
+
+        <div class="space-y-3" id="q1-options">
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q1" value="A" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a, b) = \frac{1}{2} \cdot a \cdot b$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q1" value="B" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a, b) = a \cdot b$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q1" value="C" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a, b) = 2a + 2b$</span>
+          </label>
+        </div>
+
+        <div id="feedback-1" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-1" onclick="checkStep1()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen
+        </button>
+      </div>
+
+      <!-- ================= STEP 2 ================= -->
+      <div id="step-2" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 2: Nebenbedingung (Geradengleichung)</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">3 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Der Eckpunkt $P(a|b)$ liegt auf der Geraden durch $Q(0|5)$ und $R(3|0)$. Bestimme die Geradengleichung für die Höhe $b(a)$.
+        </p>
+
+        <div class="space-y-3" id="q2-options">
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q2" value="A" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$b = -\frac{3}{5}a + 5$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q2" value="B" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$b = -\frac{5}{3}a + 5$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q2" value="C" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$b = \frac{5}{3}a - 3$</span>
+          </label>
+        </div>
+
+        <div id="feedback-2" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-2" onclick="checkStep2()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen
+        </button>
+      </div>
+
+      <!-- ================= STEP 3 ================= -->
+      <div id="step-3" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 3: Zielfunktion $A(a)$ aufstellen</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">2 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Setze $b = -\frac{5}{3}a + 5$ in $A = a \cdot b$ ein. Wie lautet die Zielfunktion $A(a)$ inklusive Definitionsbereich?
+        </p>
+
+        <div class="space-y-3" id="q3-options">
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q3" value="A" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a) = -\frac{5}{3}a^2 + 5a$ mit $D_A = [0; 3]$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q3" value="B" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a) = -\frac{5}{3}a + 5a^2$ mit $D_A = [0; 5]$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q3" value="C" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A(a) = -\frac{3}{5}a^2 + 3a$ mit $D_A = [0; 3]$</span>
+          </label>
+        </div>
+
+        <div id="feedback-3" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-3" onclick="checkStep3()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen
+        </button>
+      </div>
+
+      <!-- ================= STEP 4 ================= -->
+      <div id="step-4" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 4: Ableitungen bilden</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">2 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Bilde die 1. und 2. Ableitungen der Zielfunktion $A(a) = -\frac{5}{3}a^2 + 5a$.
+        </p>
+
+        <div class="space-y-3" id="q4-options">
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q4" value="A" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A'(a) = -\frac{5}{3}a + 5$ und $A''(a) = -\frac{5}{3}$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q4" value="B" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A'(a) = -\frac{10}{3}a + 5$ und $A''(a) = -\frac{10}{3}$</span>
+          </label>
+          <label class="flex items-start p-3.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="q4" value="C" class="mt-1 text-indigo-600 focus:ring-indigo-500">
+            <span class="ml-3 text-sm font-medium text-slate-800">$A'(a) = -\frac{10}{3}a^2 + 5$ und $A''(a) = -\frac{20}{3}a$</span>
+          </label>
+        </div>
+
+        <div id="feedback-4" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-4" onclick="checkStep4()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen
+        </button>
+      </div>
+
+      <!-- ================= STEP 5 ================= -->
+      <div id="step-5" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 5: Notwendige Bedingung ($A'(a) = 0$)</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">3 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Setze $A'(a) = 0$ und berechne die optimale Breite $a$.<br>
+          <em>Gleichung: $-\frac{10}{3}a + 5 = 0$</em>
+        </p>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <label for="q5-input" class="text-sm font-semibold text-slate-800">Optimale Breite $a = $</label>
+            <input type="text" id="q5-input" placeholder="z.B. 1,5 oder 3/2" class="w-36 px-3 py-2 border border-slate-300 rounded-xl font-mono text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <span class="text-sm font-medium text-slate-600">dm</span>
+          </div>
+        </div>
+
+        <div id="feedback-5" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-5" onclick="checkStep5()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen
+        </button>
+      </div>
+
+      <!-- ================= STEP 6 ================= -->
+      <div id="step-6" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Schritt 6: Optimaler Flächeninhalt $A_{\max}$</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg">3 Punkte</span>
+        </div>
+        <p class="text-sm text-slate-700 mb-4">
+          Für $a = 1{,}5\text{ dm}$ ist die Höhe $b = -\frac{5}{3}(1{,}5) + 5 = 2{,}5\text{ dm}$.<br>
+          Berechne nun den maximalen Flächeninhalt $A_{\max}$ des Rechtecks!
+        </p>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <label for="q6-input" class="text-sm font-semibold text-slate-800">Maximaler Inhalt $A_{\max} = $</label>
+            <input type="text" id="q6-input" placeholder="z.B. 3,75 oder 15/4" class="w-36 px-3 py-2 border border-slate-300 rounded-xl font-mono text-center focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <span class="text-sm font-medium text-slate-600">dm²</span>
+          </div>
+        </div>
+
+        <div id="feedback-6" class="hidden mt-4 p-4 rounded-xl text-sm"></div>
+
+        <button id="btn-6" onclick="checkStep6()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+          Antwort überprüfen & Test beenden
+        </button>
+      </div>
+
+      <!-- ================= STEP 7: STRUKTURIERTE ZUSAMMENFASSUNG & AUSWERTUNG ================= -->
+      <div id="step-7" class="test-step bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+          <h3 class="text-lg font-bold text-slate-900">Auswertung & Strukturierte Zusammenfassung</h3>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg">Abgeschlossen</span>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Structured Task Summary -->
+          <div class="bg-indigo-50/60 border border-indigo-100 p-5 rounded-xl space-y-3">
+            <h4 class="font-bold text-indigo-900 text-sm mb-2 flex items-center gap-2">
+              <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i> Vollständiger Lösungsweg der Extremwertaufgabe
+            </h4>
+            
+            <ol class="list-decimal list-inside space-y-2.5 text-sm text-indigo-950 leading-relaxed">
+              <li><strong>Hauptbedingung:</strong> $A(a, b) = a \cdot b$ (Beschreibung des zu maximierenden Flächeninhalts).</li>
+              <li><strong>Nebenbedingung:</strong> Geradengleichung der Hypotenuse durch $Q(0|5)$ und $R(3|0)$: $b = -\frac{5}{3}a + 5$.</li>
+              <li><strong>Zielfunktion:</strong> $A(a) = a \cdot \left(-\frac{5}{3}a + 5\right) = -\frac{5}{3}a^2 + 5a$ mit dem Definitionsbereich $D_A = [0; 3]$.</li>
+              <li><strong>Ableitungen:</strong> 1. Ableitung $A'(a) = -\frac{10}{3}a + 5$ und 2. Ableitung $A''(a) = -\frac{10}{3}$.</li>
+              <li><strong>Extremwertbestimmung der Zielfunktion:</strong> Notwendige Bedingung $A'(a) = 0 \implies a = 1{,}5\text{ dm}$. Hinreichende Bedingung: $A''(1{,}5) = -\frac{10}{3} < 0$ (Maximum). Daraus ergibt sich die zugehörige Höhe $b = 2{,}5\text{ dm}$.</li>
+              <li><strong>Randwerte bestimmen:</strong> Überprüfung der Randwerte an den Intervallgrenzen ($A(0) = 0$ und $A(3) = 0$). Es bestätigt sich, dass das absolute Maximum im Intervallinneren bei $a = 1{,}5\text{ dm}$ liegt.</li>
+              <li><strong>Antwortsatz:</strong> Das Rechteck mit dem maximalen Flächeninhalt hat eine Breite von $1{,}5\text{ dm}$ und eine Höhe von $2{,}5\text{ dm}$. Der maximale Flächeninhalt beträgt somit $3{,}75\text{ dm}^2$.</li>
+            </ol>
+          </div>
+
+          <!-- Score Breakdown -->
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+            <h4 class="font-bold text-slate-800 text-sm mb-3">Übersicht der erreichten Punkte:</h4>
+            <div id="result-breakdown" class="text-sm space-y-2 text-slate-700">
+              <!-- Dynamically populated -->
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center font-bold text-base text-slate-900">
+              <span>Gesamtergebnis:</span>
+              <span id="final-score-text" class="text-indigo-600 font-mono text-xl">0 / 15 Pkt</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="location.reload()" class="mt-6 w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+          <i data-lucide="rotate-cw" class="w-4 h-4"></i> Test wiederholen
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Interactive Canvas Logic (y-Axis UP, Touch & Dragging) -->
+  <script>
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    const slider = document.getElementById('p-slider');
+
+    let currentA = 1.5;
+    let isDragging = false;
+
+    // Canvas Coordinate Settings
+    const padding = 40;
+    const maxX = 4.0;
+    const maxY = 6.0;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      drawGraph();
+    }
+
+    // Convert Math Coordinates (x, y) to Canvas Pixels (px, py) - y-Axis points UP
+    function mathToPixel(x, y) {
+      const width = canvas.getBoundingClientRect().width;
+      const height = canvas.getBoundingClientRect().height;
+      const plotWidth = width - 2 * padding;
+      const plotHeight = height - 2 * padding;
+
+      const px = padding + (x / maxX) * plotWidth;
+      const py = height - padding - (y / maxY) * plotHeight; // Inverted Y axis
+      return { px, py };
+    }
+
+    // Convert Canvas Pixels to Math X coordinate
+    function pixelToMathX(px) {
+      const width = canvas.getBoundingClientRect().width;
+      const plotWidth = width - 2 * padding;
+      let x = ((px - padding) / plotWidth) * maxX;
+      return Math.max(0, Math.min(3, x)); // Clamped between 0 and 3
+    }
+
+    function drawGraph() {
+      const width = canvas.getBoundingClientRect().width;
+      const height = canvas.getBoundingClientRect().height;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Grid
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= maxX; x += 0.5) {
+        const { px } = mathToPixel(x, 0);
+        ctx.beginPath();
+        ctx.moveTo(px, padding / 2);
+        ctx.lineTo(px, height - padding / 2);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= maxY; y += 0.5) {
+        const { py } = mathToPixel(0, y);
+        ctx.beginPath();
+        ctx.moveTo(padding / 2, py);
+        ctx.lineTo(width - padding / 2, py);
+        ctx.stroke();
+      }
+
+      // 2. Axes (Origin at bottom-left)
+      const origin = mathToPixel(0, 0);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+
+      // x-Axis
+      ctx.beginPath();
+      ctx.moveTo(origin.px, origin.py);
+      ctx.lineTo(width - padding / 2, origin.py);
+      ctx.stroke();
+
+      // y-Axis (pointing UP)
+      ctx.beginPath();
+      ctx.moveTo(origin.px, origin.py);
+      ctx.lineTo(origin.px, padding / 2);
+      ctx.stroke();
+
+      // Axis Arrows & Labels
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.fillText('x (dm)', width - padding + 5, origin.py + 15);
+      ctx.fillText('y (dm)', origin.px - 15, padding / 2 - 8);
+
+      // Ticks & Numbers
+      ctx.font = '10px Inter, sans-serif';
+      ctx.fillStyle = '#64748b';
+      for (let x = 1; x <= 3; x++) {
+        const { px, py } = mathToPixel(x, 0);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px, py + 4);
+        ctx.stroke();
+        ctx.fillText(x, px - 3, py + 16);
+      }
+      for (let y = 1; y <= 5; y++) {
+        const { px, py } = mathToPixel(0, y);
+        ctx.beginPath();
+        ctx.moveTo(px - 4, py);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+        ctx.fillText(y, px - 16, py + 3);
+      }
+
+      // 3. Triangle Line (Hypotenuse from Q(0|5) to R(3|0))
+      const qPt = mathToPixel(0, 5);
+      const rPt = mathToPixel(3, 0);
+
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(qPt.px, qPt.py);
+      ctx.lineTo(rPt.px, rPt.py);
+      ctx.stroke();
+
+      // Points Q and R
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath(); ctx.arc(qPt.px, qPt.py, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(rPt.px, rPt.py, 4, 0, Math.PI * 2); ctx.fill();
+
+      ctx.font = 'bold 11px Inter, sans-serif';
+      ctx.fillText('Q(0|5)', qPt.px + 8, qPt.py + 4);
+      ctx.fillText('R(3|0)', rPt.px - 10, rPt.py - 8);
+
+      // 4. Rectangle A(a, b)
+      const a = currentA;
+      const b = (-5 / 3) * a + 5;
+      const area = a * b;
+
+      const pPt = mathToPixel(a, b);
+
+      // Rectangle Fill
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+      ctx.strokeStyle = '#f43f5e';
+      ctx.lineWidth = 2;
+      ctx.fillRect(origin.px, pPt.py, pPt.px - origin.px, origin.py - pPt.py);
+      ctx.strokeRect(origin.px, pPt.py, pPt.px - origin.px, origin.py - pPt.py);
+
+      // Area label inside rectangle
+      if (a > 0.4 && b > 0.8) {
+        ctx.fillStyle = '#be123c';
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`A = ${area.toFixed(2)}`, origin.px + (pPt.px - origin.px) / 2, pPt.py + (origin.py - pPt.py) / 2 + 4);
+        ctx.textAlign = 'left';
+      }
+
+      // Point P(a|b)
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.arc(pPt.px, pPt.py, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Point P Label
+      ctx.fillStyle = '#0369a1';
+      ctx.font = 'bold 12px Inter, sans-serif';
+      ctx.fillText(`P(${a.toFixed(2)} | ${b.toFixed(2)})`, pPt.px + 10, pPt.py - 6);
+
+      // Update Live UI Labels
+      document.getElementById('slider-val-display').innerText = `a = ${a.toFixed(2)} dm`;
+      document.getElementById('live-a').innerText = `${a.toFixed(2)} dm`;
+      document.getElementById('live-b').innerText = `${b.toFixed(2)} dm`;
+      document.getElementById('live-area').innerText = `${area.toFixed(2)} dm²`;
+    }
+
+    function updateFromX(xVal) {
+      currentA = Math.max(0, Math.min(3, xVal));
+      slider.value = currentA;
+      drawGraph();
+    }
+
+    // Event Listeners for Slider & Canvas Interaction
+    slider.addEventListener('input', (e) => {
+      updateFromX(parseFloat(e.target.value));
+    });
+
+    function handlePointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const px = clientX - rect.left;
+      const mathX = pixelToMathX(px);
+      updateFromX(mathX);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      canvas.setPointerCapture(e.pointerId);
+      handlePointer(e);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (isDragging) handlePointer(e);
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+      isDragging = false;
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+
+  <!-- Test Logic & Evaluation -->
+  <script>
+    let currentStep = 1;
+    let totalScore = 0;
+    const maxScore = 15;
+    const stepAnswered = [false, false, false, false, false, false];
+    const stepPointsEarned = [0, 0, 0, 0, 0, 0];
+    const stepMaxPoints = [2, 3, 2, 2, 3, 3];
+    const stepTitles = [
+      "Schritt 1: Hauptbedingung wählen",
+      "Schritt 2: Nebenbedingung (Gerade)",
+      "Schritt 3: Zielfunktion A(a)",
+      "Schritt 4: Ableitungen bilden",
+      "Schritt 5: Notwendige Bedingung",
+      "Schritt 6: Optimaler Flächeninhalt"
+    ];
+
+    function parseInputNumber(valStr) {
+      if (!valStr) return NaN;
+      let clean = valStr.trim().replace(',', '.');
+      if (clean.includes('/')) {
+        let parts = clean.split('/');
+        if (parts.length === 2) {
+          let num = parseFloat(parts[0]);
+          let den = parseFloat(parts[1]);
+          if (!isNaN(num) && !isNaN(den) && den !== 0) {
+            return num / den;
+          }
+        }
+      }
+      return parseFloat(clean);
+    }
+
+    function updateHeader() {
+      document.getElementById('score-display').innerText = `${totalScore} / ${maxScore} Pkt`;
+      document.getElementById('step-display').innerText = currentStep <= 6 ? `Schritt ${currentStep}/6` : 'Auswertung';
+      document.getElementById('progress-bar').style.width = currentStep <= 6 ? `${(currentStep / 6) * 100}%` : '100%';
+    }
+
+    function renderMath() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    // Step 1
+    function checkStep1() {
+      if (stepAnswered[0]) { nextStep(); return; }
+      const selected = document.querySelector('input[name="q1"]:checked');
+      const feedback = document.getElementById('feedback-1');
+      
+      if (!selected) {
+        alert("Bitte wähle eine Antwort aus!");
+        return;
+      }
+
+      stepAnswered[0] = true;
+      feedback.classList.remove('hidden');
+
+      if (selected.value === 'B') {
+        stepPointsEarned[0] = 2;
+        totalScore += 2;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Richtig! (+2 Pkt)</strong><br>Der Flächeninhalt eines Rechtecks ist schlicht Breite mal Höhe: $A = a \\cdot b$.";
+      } else {
+        stepPointsEarned[0] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist B: $A(a, b) = a \\cdot b$. Option A ist die Dreiecksfläche, Option C der Umfang.";
+      }
+
+      document.getElementById('btn-1').innerText = "Weiter zu Schritt 2 →";
+      updateHeader();
+      renderMath();
+    }
+
+    // Step 2
+    function checkStep2() {
+      if (stepAnswered[1]) { nextStep(); return; }
+      const selected = document.querySelector('input[name="q2"]:checked');
+      const feedback = document.getElementById('feedback-2');
+      
+      if (!selected) {
+        alert("Bitte wähle eine Antwort aus!");
+        return;
+      }
+
+      stepAnswered[1] = true;
+      feedback.classList.remove('hidden');
+
+      if (selected.value === 'B') {
+        stepPointsEarned[1] = 3;
+        totalScore += 3;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Richtig! (+3 Pkt)</strong><br>Steigung $m = \\frac{0-5}{3-0} = -\\frac{5}{3}$ und y-Achsenabschnitt $n = 5$. Damit lautet die Gerade $b = -\\frac{5}{3}a + 5$.";
+      } else {
+        stepPointsEarned[1] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist B: $b = -\\frac{5}{3}a + 5$. Die Steigung berechnet sich aus $\\frac{\\Delta y}{\\Delta x} = -\\frac{5}{3}$.";
+      }
+
+      document.getElementById('btn-2').innerText = "Weiter zu Schritt 3 →";
+      updateHeader();
+      renderMath();
+    }
+
+    // Step 3
+    function checkStep3() {
+      if (stepAnswered[2]) { nextStep(); return; }
+      const selected = document.querySelector('input[name="q3"]:checked');
+      const feedback = document.getElementById('feedback-3');
+      
+      if (!selected) {
+        alert("Bitte wähle eine Antwort aus!");
+        return;
+      }
+
+      stepAnswered[2] = true;
+      feedback.classList.remove('hidden');
+
+      if (selected.value === 'A') {
+        stepPointsEarned[2] = 2;
+        totalScore += 2;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Richtig! (+2 Pkt)</strong><br>$A(a) = a \\cdot \\left(-\\frac{5}{3}a + 5\\right) = -\\frac{5}{3}a^2 + 5a$. Der Definitionsbereich reicht von $0$ bis $3$.";
+      } else {
+        stepPointsEarned[2] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist A: Durch Ausmultiplizieren erhält man $A(a) = -\\frac{5}{3}a^2 + 5a$ mit $D_A = [0; 3]$.";
+      }
+
+      document.getElementById('btn-3').innerText = "Weiter zu Schritt 4 →";
+      updateHeader();
+      renderMath();
+    }
+
+    // Step 4
+    function checkStep4() {
+      if (stepAnswered[3]) { nextStep(); return; }
+      const selected = document.querySelector('input[name="q4"]:checked');
+      const feedback = document.getElementById('feedback-4');
+      
+      if (!selected) {
+        alert("Bitte wähle eine Antwort aus!");
+        return;
+      }
+
+      stepAnswered[3] = true;
+      feedback.classList.remove('hidden');
+
+      if (selected.value === 'B') {
+        stepPointsEarned[3] = 2;
+        totalScore += 2;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Richtig! (+2 Pkt)</strong><br>$A'(a) = 2 \\cdot \\left(-\\frac{5}{3}\\right)a + 5 = -\\frac{10}{3}a + 5$ und $A''(a) = -\\frac{10}{3} < 0$ (Maximum).";
+      } else {
+        stepPointsEarned[3] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist B: $A'(a) = -\\frac{10}{3}a + 5$ und $A''(a) = -\\frac{10}{3}$.";
+      }
+
+      document.getElementById('btn-4').innerText = "Weiter zu Schritt 5 →";
+      updateHeader();
+      renderMath();
+    }
+
+    // Step 5
+    function checkStep5() {
+      if (stepAnswered[4]) { nextStep(); return; }
+      const inputVal = parseInputNumber(document.getElementById('q5-input').value);
+      const feedback = document.getElementById('feedback-5');
+      
+      if (isNaN(inputVal)) {
+        alert("Bitte gib einen gültigen Wert ein (z.B. 1,5 oder 3/2)!");
+        return;
+      }
+
+      stepAnswered[4] = true;
+      feedback.classList.remove('hidden');
+
+      if (Math.abs(inputVal - 1.5) < 0.05) {
+        stepPointsEarned[4] = 3;
+        totalScore += 3;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Exakt richtig! (+3 Pkt)</strong><br>Rechnung: $-\\frac{10}{3}a + 5 = 0 \\implies -\\frac{10}{3}a = -5 \\implies a = 5 \\cdot \\frac{3}{10} = 1{,}5\\text{ dm}$.";
+      } else {
+        stepPointsEarned[4] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist $a = 1{,}5\\text{ dm}$ (oder $\\frac{3}{2}$). Umgestellt: $a = 5 \\cdot \\frac{3}{10} = 1{,}5$.";
+      }
+
+      document.getElementById('btn-5').innerText = "Weiter zu Schritt 6 →";
+      updateHeader();
+      renderMath();
+    }
+
+    // Step 6
+    function checkStep6() {
+      if (stepAnswered[5]) { finishTest(); return; }
+      const inputVal = parseInputNumber(document.getElementById('q6-input').value);
+      const feedback = document.getElementById('feedback-6');
+      
+      if (isNaN(inputVal)) {
+        alert("Bitte gib einen gültigen Wert ein (z.B. 3,75 oder 15/4)!");
+        return;
+      }
+
+      stepAnswered[5] = true;
+      feedback.classList.remove('hidden');
+
+      if (Math.abs(inputVal - 3.75) < 0.05) {
+        stepPointsEarned[5] = 3;
+        totalScore += 3;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-emerald-50 border border-emerald-200 text-emerald-900";
+        feedback.innerHTML = "<strong>Exakt richtig! (+3 Pkt)</strong><br>$A_{\\max} = 1{,}5 \\cdot 2{,}5 = 3{,}75\\text{ dm}^2$ (oder $A(1{,}5) = -\\frac{5}{3}(1{,}5)^2 + 5(1{,}5) = 3{,}75\\text{ dm}^2$).";
+      } else {
+        stepPointsEarned[5] = 0;
+        feedback.className = "mt-4 p-4 rounded-xl text-sm bg-rose-50 border border-rose-200 text-rose-900";
+        feedback.innerHTML = "<strong>Leider falsch. (+0 Pkt)</strong><br>Richtig ist $A_{\\max} = 3{,}75\\text{ dm}^2$ (or $\\frac{15}{4}$). Berechnet als $a \\cdot b = 1{,}5 \\cdot 2{,}5 = 3{,}75$.";
+      }
+
+      document.getElementById('btn-6').innerText = "Zur Auswertung & Zusammenfassung →";
+      updateHeader();
+      renderMath();
+    }
+
+    function nextStep() {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep++;
+      if (currentStep <= 7) {
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+      }
+      updateHeader();
+    }
+
+    function finishTest() {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      currentStep = 7;
+      document.getElementById('step-7').classList.add('active');
+      updateHeader();
+
+      // Populate breakdown
+      const breakdownContainer = document.getElementById('result-breakdown');
+      breakdownContainer.innerHTML = '';
+      
+      for (let i = 0; i < 6; i++) {
+        const row = document.createElement('div');
+        row.className = "flex justify-between items-center py-1 border-b border-slate-200/60 last:border-0";
+        const earned = stepPointsEarned[i];
+        const max = stepMaxPoints[i];
+        const badgeColor = earned === max ? 'text-emerald-600 bg-emerald-50' : (earned > 0 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50');
+        
+        row.innerHTML = `
+          <span class="text-slate-700">${stepTitles[i]}</span>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded-full ${badgeColor}">${earned} / ${max} Pkt</span>
+        `;
+        breakdownContainer.appendChild(row);
+      }
+
+      document.getElementById('final-score-text').innerText = `${totalScore} / ${maxScore} Pkt`;
+      renderMath();
+    }
+
+    window.onload = function() {
+      lucide.createIcons();
+      resizeCanvas();
+      updateHeader();
+      renderMath();
+    };
+  </script>
+</body>
+</html>
